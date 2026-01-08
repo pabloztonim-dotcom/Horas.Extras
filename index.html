@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Monitor de Horas Extras</title>
+
+<style>
+:root{
+    --cor50:#27ae60;
+    --cor75:#f39c12;
+    --cor100:#e74c3c;
+    --corBruto:#2c3e50;
+    --corLiquido:#2980b9;
+}
+
+/* RESET VISUAL DOS CAMPOS */
+input,
+select,
+button{
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+/* PADRONIZAÇÃO DE ALTURA */
+input[type="date"],
+input[type="number"],
+select{
+    height:48px;
+    line-height:48px;
+}
+
+/* REMOVE DIFERENÇAS ENTRE NAVEGADORES */
+input,
+select{
+    appearance:none;
+    -webkit-appearance:none;
+    -moz-appearance:none;
+}
+
+body{
+    background:#f0f2f5;
+    padding:20px;
+}
+
+.box{
+    background:#fff;
+    max-width:800px;
+    margin:auto;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.campo{
+    margin-bottom:15px;
+}
+
+label{
+    font-weight:bold;
+    font-size:.9em;
+}
+
+input,select{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.botoes-acao{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+button{
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn-add{background:#2c3e50;color:#fff;}
+.btn-print{background:#95a5a6;color:#fff;}
+
+.resumo-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:10px;
+    margin:25px 0;
+}
+
+.card{
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+    color:#fff;
+}
+
+.bg-total{background:#7f8c8d;}
+.bg-50{background:var(--cor50);}
+.bg-75{background:var(--cor75);}
+.bg-100{background:var(--cor100);}
+.bg-bruto{background:var(--corBruto);}
+.bg-liquido{background:var(--corLiquido);}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    text-align:center;
+}
+
+th{
+    background:#f8f9fa;
+    font-size:.85em;
+}
+
+.no-print{display:block;}
+
+@media print{
+    .no-print{display:none;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>📊 Registo de Horas Extras</h2>
+
+<div class="no-print">
+
+<div class="campo">
+<label>Salário Base Mensal (€)</label>
+<input type="number" id="salBase" value="1000" oninput="atualizarInterface()">
+</div>
+
+<div style="display:flex;gap:10px;">
+<div class="campo" style="flex:1">
+<label>Data</label>
+<input type="date" id="dataReg">
+</div>
+<div class="campo" style="flex:1">
+<label>Tipo de Dia</label>
+<select id="tipoDia">
+<option value="util">Dia Útil</option>
+<option value="extra">Sábado / Feriado</option>
+</select>
+</div>
+</div>
+
+<div class="campo">
+<label>Horas Extras Trabalhadas</label>
+<input type="number" id="qtdH" step="0.1" placeholder="Ex: 2 ou 3.5">
+</div>
+
+<div class="botoes-acao">
+<button class="btn-add" id="adicionar">ADICIONAR</button>
+<button class="btn-print" onclick="window.print()">GERAR PDF</button>
+</div>
+
+</div>
+
+<div class="resumo-grid">
+<div class="card bg-total">Total Horas <span id="totalH">0h</span></div>
+<div class="card bg-50">50% <span id="th50">0h</span></div>
+<div class="card bg-75">75% <span id="th75">0h</span></div>
+<div class="card bg-100">100% <span id="th100">0h</span></div>
+<div class="card bg-bruto">Bruto <span id="totalB">0</span>€</div>
+<div class="card bg-liquido">Líquido <span id="totalL">0</span>€</div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Data</th>
+<th>50%</th>
+<th>75%</th>
+<th>100%</th>
+<th>Bruto</th>
+<th class="no-print">Ação</th>
+</tr>
+</thead>
+<tbody id="corpoTabela"></tbody>
+</table>
+
+</div>
+
+<script>
+let listaHoras = JSON.parse(localStorage.getItem("registo_horas")) || [];
+
+function atualizarInterface(){
+    const sal = parseFloat(salBase.value) || 0;
+    const valorHN = (sal * 12) / (52 * 40);
+
+    let tH=0,t50=0,t75=0,t100=0,tB=0;
+    corpoTabela.innerHTML="";
+
+    listaHoras.forEach((i,idx)=>{
+        const bruto = (i.h50*valorHN*1.5)+(i.h75*valorHN*1.75)+(i.h100*valorHN*2);
+
+        tH+=i.h50+i.h75+i.h100;
+        t50+=i.h50; t75+=i.h75; t100+=i.h100; tB+=bruto;
+
+        corpoTabela.innerHTML+=`
+        <tr>
+            <td>${i.dt.split("-").reverse().join("/")}</td>
+            <td>${i.h50?i.h50.toFixed(1)+'h':'-'}</td>
+            <td>${i.h75?i.h75.toFixed(1)+'h':'-'}</td>
+            <td>${i.h100?i.h100.toFixed(1)+'h':'-'}</td>
+            <td>${bruto.toFixed(2)}€</td>
+            <td class="no-print"><button onclick="remover(${idx})">X</button></td>
+        </tr>`;
+    });
+
+    totalH.textContent=tH.toFixed(1)+'h';
+    th50.textContent=t50.toFixed(1)+'h';
+    th75.textContent=t75.toFixed(1)+'h';
+    th100.textContent=t100.toFixed(1)+'h';
+    totalB.textContent=tB.toFixed(2);
+    totalL.textContent=(tB*0.89).toFixed(2);
+
+    localStorage.setItem("registo_horas",JSON.stringify(listaHoras));
+}
+
+adicionar.onclick=()=>{
+    const dt=dataReg.value;
+    const tipo=tipoDia.value;
+    const qtd=parseFloat(qtdH.value);
+
+    if(!dt||isNaN(qtd)||qtd<=0){
+        alert("Preencha corretamente a data e as horas");
+        return;
+    }
+
+    let novo={dt,h50:0,h75:0,h100:0};
+
+    if(tipo==="extra"){
+        novo.h100=qtd;
+    }else{
+        novo.h50=Math.min(1,qtd);
+        novo.h75=Math.max(0,qtd-1);
+    }
+
+    listaHoras.push(novo);
+    qtdH.value="";
+    atualizarInterface();
+};
+
+function remover(i){
+    if(confirm("Apagar registo?")){
+        listaHoras.splice(i,1);
+        atualizarInterface();
+    }
+}
+
+dataReg.valueAsDate=new Date();
+atualizarInterface();
+</script>
+
+</body>
+</html>
