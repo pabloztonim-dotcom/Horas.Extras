@@ -2,6 +2,7 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitor de Horas Extras</title>
 
 <style>
@@ -13,56 +14,40 @@
     --corLiquido:#2980b9;
 }
 
-/* RESET VISUAL DOS CAMPOS */
-input,
-select,
-button{
+*{
     box-sizing:border-box;
     font-family:'Segoe UI',sans-serif;
 }
 
-/* PADRONIZAÇÃO DE ALTURA */
-input[type="date"],
-input[type="number"],
-select{
-    height:48px;
-    line-height:48px;
-}
-
-/* REMOVE DIFERENÇAS ENTRE NAVEGADORES */
-input,
-select{
-    appearance:none;
-    -webkit-appearance:none;
-    -moz-appearance:none;
-}
-
 body{
     background:#f0f2f5;
-    padding:20px;
+    padding:16px;
 }
 
+/* CONTAINER */
 .box{
     background:#fff;
     max-width:800px;
     margin:auto;
-    padding:25px;
-    border-radius:15px;
+    padding:20px;
+    border-radius:14px;
     box-shadow:0 4px 20px rgba(0,0,0,.08);
 }
 
+/* TÍTULO */
 h2{
     text-align:center;
-    margin-bottom:25px;
+    margin-bottom:20px;
 }
 
-.campo{
-    margin-bottom:15px;
-}
+/* FORM */
+.campo{margin-bottom:14px;}
 
 label{
-    font-weight:bold;
-    font-size:.9em;
+    font-weight:600;
+    font-size:.85em;
+    display:block;
+    margin-bottom:6px;
 }
 
 input,select{
@@ -70,8 +55,10 @@ input,select{
     padding:12px;
     border:1px solid #ddd;
     border-radius:8px;
+    font-size:1em;
 }
 
+/* BOTÕES */
 .botoes-acao{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -84,23 +71,33 @@ button{
     border-radius:8px;
     cursor:pointer;
     font-weight:bold;
+    font-size:.95em;
 }
 
 .btn-add{background:#2c3e50;color:#fff;}
 .btn-print{background:#95a5a6;color:#fff;}
 
+/* RESUMO */
 .resumo-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
     gap:10px;
-    margin:25px 0;
+    margin:22px 0;
 }
 
 .card{
-    padding:15px;
+    padding:14px;
     border-radius:10px;
     text-align:center;
     color:#fff;
+    font-size:.9em;
+}
+
+.card span{
+    display:block;
+    margin-top:6px;
+    font-size:1.2em;
+    font-weight:bold;
 }
 
 .bg-total{background:#7f8c8d;}
@@ -110,28 +107,55 @@ button{
 .bg-bruto{background:var(--corBruto);}
 .bg-liquido{background:var(--corLiquido);}
 
+/* TABELA */
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:20px;
+    margin-top:15px;
+    font-size:.9em;
 }
 
 th,td{
-    padding:12px;
+    padding:10px;
     border-bottom:1px solid #eee;
     text-align:center;
 }
 
 th{
     background:#f8f9fa;
-    font-size:.85em;
+    font-size:.75em;
+    text-transform:uppercase;
+}
+
+/* MOBILE AJUSTES */
+@media (max-width:600px){
+
+    body{padding:10px;}
+
+    .box{padding:16px;}
+
+    /* Empilha campos */
+    .linha-flex{
+        display:block !important;
+    }
+
+    /* Botões em coluna */
+    .botoes-acao{
+        grid-template-columns:1fr;
+    }
+
+    /* Tabela mais compacta */
+    table{
+        font-size:.8em;
+    }
+
+    th,td{
+        padding:8px;
+    }
 }
 
 .no-print{display:block;}
-
-@media print{
-    .no-print{display:none;}
-}
+@media print{.no-print{display:none;}}
 </style>
 </head>
 
@@ -147,7 +171,7 @@ th{
 <input type="number" id="salBase" value="1000" oninput="atualizarInterface()">
 </div>
 
-<div style="display:flex;gap:10px;">
+<div class="linha-flex" style="display:flex;gap:10px;">
 <div class="campo" style="flex:1">
 <label>Data</label>
 <input type="date" id="dataReg">
@@ -202,14 +226,14 @@ th{
 let listaHoras = JSON.parse(localStorage.getItem("registo_horas")) || [];
 
 function atualizarInterface(){
-    const sal = parseFloat(salBase.value) || 0;
-    const valorHN = (sal * 12) / (52 * 40);
+    const sal=parseFloat(salBase.value)||0;
+    const valorHN=(sal*12)/(52*40);
 
     let tH=0,t50=0,t75=0,t100=0,tB=0;
     corpoTabela.innerHTML="";
 
     listaHoras.forEach((i,idx)=>{
-        const bruto = (i.h50*valorHN*1.5)+(i.h75*valorHN*1.75)+(i.h100*valorHN*2);
+        const bruto=(i.h50*valorHN*1.5)+(i.h75*valorHN*1.75)+(i.h100*valorHN*2);
 
         tH+=i.h50+i.h75+i.h100;
         t50+=i.h50; t75+=i.h75; t100+=i.h100; tB+=bruto;
